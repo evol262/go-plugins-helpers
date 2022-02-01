@@ -69,6 +69,11 @@ type GetResponse struct {
 	Volume *Volume
 }
 
+// CreateResponse structure for a volume create response
+type CreateResponse struct {
+	Volume *Volume
+}
+
 // ListResponse structure for a volume list response
 type ListResponse struct {
 	Volumes []*Volume
@@ -104,7 +109,7 @@ func NewErrorResponse(msg string) *ErrorResponse {
 
 // Driver represent the interface a driver must fulfill.
 type Driver interface {
-	Create(*CreateRequest) error
+	Create(*CreateRequest) (*CreateResponse, error)
 	List() (*ListResponse, error)
 	Get(*GetRequest) (*GetResponse, error)
 	Remove(*RemoveRequest) error
@@ -134,12 +139,12 @@ func (h *Handler) initMux() {
 		if err != nil {
 			return
 		}
-		err = h.driver.Create(req)
+		res, err := h.driver.Create(req)
 		if err != nil {
 			sdk.EncodeResponse(w, NewErrorResponse(err.Error()), true)
 			return
 		}
-		sdk.EncodeResponse(w, struct{}{}, false)
+		sdk.EncodeResponse(w, res, false)
 	})
 	h.HandleFunc(removePath, func(w http.ResponseWriter, r *http.Request) {
 		req := &RemoveRequest{}
